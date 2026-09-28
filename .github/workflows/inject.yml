@@ -1,0 +1,307 @@
+name: Create Matter for Threads app
+
+on:
+  workflow_dispatch:
+    inputs:
+      ipa_url:
+        description: "URL to your decrypted Threads IPA"
+        required: true
+        type: string
+
+      display_name:
+        description: "App Name"
+        default: "Threads"
+        required: true
+        type: string
+
+      bundle_id:
+        description: "Bundle ID"
+        default: "com.burbn.barcelona"
+        required: true
+        type: string
+
+concurrency:
+  group: matter-inject-${{ github.actor }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  MATTER_PACKAGE_VERSION: "0.1.0~rc1"
+  MATTER_DISPLAY_VERSION: "0.1.0 RC1"
+
+jobs:
+  build-matter:
+    name: Build Matter
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out Matter source
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            fakeroot \
+            git \
+            libtinfo6 \
+            libxml2 \
+            perl \
+            rsync \
+            unzip
+
+      - name: Install pinned Theos revision
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          theos_commit="dd5c14bb9d91311e221d51b5bfb8c9e5948156db"
+
+          export THEOS="${RUNNER_TEMP}/theos"
+          export CI=1
+
+          installer="https://raw.githubusercontent.com/theos/theos/${theos_commit}/bin/install-theos"
+
+          curl -fsSL "${installer}" -o "${RUNNER_TEMP}/install-theos"
+          bash "${RUNNER_TEMP}/install-theos"
+
+          git -C "${THEOS}" fetch --depth=1 origin "${theos_commit}"
+          git -C "${THEOS}" checkout --detach "${theos_commit}"
+          git -C "${THEOS}" submodule update --init --recursive
+
+          echo "THEOS=${THEOS}" >> "${GITHUB_ENV}"
+          echo "THEOS_STAGING_DIR=${RUNNER_TEMP}/matter-staging" >> "${GITHUB_ENV}"
+
+      - name: Build Matter package
+        run: |
+          make clean package \
+            MATTER_EXPERIMENTAL_FILTERING=1 \
+            MATTER_SETTINGS_INJECTION=1 \
+            MATTER_UI_DISCOVERY=0 \
+            MATTER_TELEMETRY_DISCOVERY=0 \
+            PACKAGE_VERSION="${MATTER_PACKAGE_VERSION}"
+
+      - name: Verify Matter package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deb="packages/com.panaikran.matter_${MATTER_PACKAGE_VERSION}_iphoneos-arm.deb"
+
+          test -f "${deb}"
+
+          metadata="$(dpkg-deb -f "${deb}")"
+
+          grep -Fxq "Package: com.panaikran.matter" <<< "${metadata}"
+          grep -Fxq "Version: ${MATTER_PACKAGE_VERSION}" <<< "${metadata}"
+          grep -Fxq "Architecture: iphoneos-arm" <<< "${metadata}"
+
+          if grep -q '^Depends:' <<< "${metadata}"; then
+            echo "::error::Unexpected Depends field in Matter package."
+            exit 1
+          fi
+
+      # Safe to use an Actions artifact here because this contains
+      # Matter only, not Threads.
+      - name: Upload Matter package for injection job
+        uses: actions/upload-artifact@v4
+        with:
+          name: matter-deb
+          path: packages/com.panaikran.matter_0.1.0~rc1_iphoneos-arm.deb
+          retention-days: 1
+          if-no-files-found: error
+
+  inject:
+    name: Inject Matter into Threads
+    needs: build-matter
+    runs-on: macos-latest
+
+    steps:
+      - name: Mask IPA URL
+        shell: bash
+        env:
+          IPA_URL: ${{ inputs.ipa_url }}
+        run: |
+          echo "::add-mask::${IPA_URL}"
+
+      - name: Download Matter package
+        uses: actions/download-artifact@v5
+        with:
+          name: matter-deb
+          path: matter-package
+
+      - name: Locate Matter package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deb="$(find matter-package -type f -name '*.deb' -print -quit)"
+
+          if [[ -z "${deb}" ]]; then
+            echo "::error::Matter .deb was not found."
+            exit 1
+          fi
+
+          cp "${deb}" "${GITHUB_WORKSPACE}/Matter.deb"
+
+      - name: Download supplied Threads IPA
+        shell: bash
+        env:
+          IPA_URL: ${{ inputs.ipa_url }}
+        run: |
+          set -euo pipefail
+
+          curl \
+            --fail \
+            --location \
+            --retry 3 \
+            --retry-delay 2 \
+            --silent \
+            --show-error \
+            "${IPA_URL}" \
+            --output "${GITHUB_WORKSPACE}/Threads.ipa"
+
+      - name: Validate IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          file_type="$(file --mime-type -b Threads.ipa)"
+
+          if [[ "${file_type}" != "application/zip" && \
+                "${file_type}" != "application/x-ios-app" ]]; then
+            echo "::error::Downloaded file is not an IPA/ZIP. Detected: ${file_type}"
+            exit 1
+          fi
+
+          unzip -tq Threads.ipa >/dev/null
+
+          rm -rf ipa-check
+          mkdir ipa-check
+          unzip -q Threads.ipa -d ipa-check
+
+          app_dir="$(find ipa-check/Payload -maxdepth 1 -type d -name '*.app' -print -quit)"
+
+          if [[ -z "${app_dir}" ]]; then
+            echo "::error::IPA does not contain Payload/*.app."
+            exit 1
+          fi
+
+          info="${app_dir}/Info.plist"
+
+          executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "${info}")"
+          bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${info}")"
+          version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${info}")"
+
+          binary="${app_dir}/${executable}"
+
+          if [[ ! -f "${binary}" ]]; then
+            echo "::error::Main application executable was not found."
+            exit 1
+          fi
+
+          echo "::notice::Detected bundle ID: ${bundle_id}"
+          echo "::notice::Detected Threads version: ${version}"
+
+          if [[ "${version}" != "448.0.0" ]]; then
+            echo "::warning::Matter 0.1.0 RC1 is validated against Threads 448.0.0. This IPA reports ${version}."
+          fi
+
+          cryptid="$(
+            otool -l "${binary}" |
+            awk '
+              /cmd LC_ENCRYPTION_INFO_64/ { found=1; next }
+              found && /cryptid/ { print $2; exit }
+            '
+          )"
+
+          if [[ -n "${cryptid}" && "${cryptid}" != "0" ]]; then
+            echo "::error::The supplied IPA appears to still be encrypted (cryptid=${cryptid})."
+            exit 1
+          fi
+
+          rm -rf ipa-check
+
+      - name: Install injection tools
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          brew install ldid
+          pipx install --force \
+            https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
+
+      - name: Inject Matter
+        shell: bash
+        env:
+          DISPLAY_NAME: ${{ inputs.display_name }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+        run: |
+          set -euo pipefail
+
+          output="Matter_for_Threads_${GITHUB_RUN_NUMBER}.ipa"
+
+          cyan \
+            -i Threads.ipa \
+            -o "${output}" \
+            -uwef Matter.deb \
+            -n "${DISPLAY_NAME}" \
+            -b "${BUNDLE_ID}" \
+            -s
+
+          test -f "${output}"
+
+          echo "OUTPUT_IPA=${output}" >> "${GITHUB_ENV}"
+
+      - name: Validate injected IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          unzip -tq "${OUTPUT_IPA}" >/dev/null
+
+          rm -rf injected-check
+          unzip -q "${OUTPUT_IPA}" -d injected-check
+
+          app_dir="$(find injected-check/Payload -maxdepth 1 -type d -name '*.app' -print -quit)"
+
+          if [[ -z "${app_dir}" ]]; then
+            echo "::error::Injected IPA does not contain Payload/*.app."
+            exit 1
+          fi
+
+          if ! find "${app_dir}" -name 'Matter.dylib' -print -quit | grep -q .; then
+            echo "::error::Matter.dylib was not found in the injected IPA."
+            exit 1
+          fi
+
+          echo "::notice::Matter injection verified."
+
+          rm -rf injected-check
+
+      # Intentionally use a DRAFT release instead of a normal Actions
+      # artifact because this output contains the user's Threads IPA.
+      - name: Create private draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: byo-matter-${{ github.run_id }}
+          target_commitish: ${{ github.sha }}
+          name: "BYO Matter for Threads — Run ${{ github.run_number }}"
+          body: |
+            User-supplied Threads IPA with Matter injected.
+
+            Matter version: ${{ env.MATTER_DISPLAY_VERSION }}
+
+            This release is intentionally a draft.
+            Do not publish it.
+          files: ${{ env.OUTPUT_IPA }}
+          draft: true
+          prerelease: true
+
+      - name: Output location
+        run: |
+          echo "::notice::Injected IPA is available in your repository's draft Releases page."
