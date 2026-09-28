@@ -155,15 +155,27 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl \
-            --fail \
-            --location \
-            --retry 3 \
-            --retry-delay 2 \
-            --silent \
-            --show-error \
-            "${IPA_URL}" \
-            --output "${GITHUB_WORKSPACE}/Threads.ipa"
+          echo "::add-mask::${IPA_URL}"
+
+          if [[ "${IPA_URL}" == *"drive.google.com"* || "${IPA_URL}" == *"docs.google.com"* ]]; then
+            echo "Google Drive link detected. Using gdown."
+            pipx install --force gdown
+
+            gdown \
+              --fuzzy \
+              "${IPA_URL}" \
+              -O "${GITHUB_WORKSPACE}/Threads.ipa"
+          else
+            curl \
+              --fail \
+              --location \
+              --retry 3 \
+              --retry-delay 2 \
+              --silent \
+              --show-error \
+              "${IPA_URL}" \
+              --output "${GITHUB_WORKSPACE}/Threads.ipa"
+          fi
 
       - name: Validate IPA
         shell: bash
