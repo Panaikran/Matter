@@ -32,7 +32,6 @@ Matter for Threads is an independent open-source project and is not affiliated w
 - Validated against Threads 448.0.0 on arm64.
 - Tested primarily with LiveContainer; direct sideload testing has also been performed.
 - Other Threads versions are not guaranteed. Threads internal classes and selectors can change.
-- Sideloaded builds may have signing or keychain differences unrelated to Matter.
 
 ## First-install defaults
 
