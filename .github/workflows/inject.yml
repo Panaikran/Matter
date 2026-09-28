@@ -161,10 +161,19 @@ jobs:
             echo "Google Drive link detected. Using gdown."
             pipx install --force gdown
 
-            gdown \
-              --fuzzy \
-              "${IPA_URL}" \
-              -O "${GITHUB_WORKSPACE}/Threads.ipa"
+            drive_id=""
+
+            if [[ "${IPA_URL}" =~ /file/d/([^/?]+) ]]; then
+              drive_id="${BASH_REMATCH[1]}"
+            elif [[ "${IPA_URL}" =~ [\?\&]id=([^\&]+) ]]; then
+              drive_id="${BASH_REMATCH[1]}"
+            fi
+
+            if [[ -n "${drive_id}" ]]; then
+              gdown "${drive_id}" -O "${GITHUB_WORKSPACE}/Threads.ipa"
+            else
+              gdown "${IPA_URL}" -O "${GITHUB_WORKSPACE}/Threads.ipa"
+            fi
           else
             curl \
               --fail \
