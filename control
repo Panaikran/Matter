@@ -1,6 +1,6 @@
 Package: com.panaikran.matter
 Name: Matter for Threads
-Version: 0.1.0~rc1
+Version: 0.1.0
 Architecture: iphoneos-arm
 Conflicts: com.example.matter
 Replaces: com.example.matter

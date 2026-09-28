@@ -1,16 +1,16 @@
-# Matter for Threads 0.1.0 RC1
+# Matter for Threads 0.1.0
 
-**Release candidate** prepared for the planned `v0.1.0-rc1` tag. The Debian package version is `0.1.0~rc1`; the planned GitHub Release title is **Matter for Threads 0.1.0 RC1**. This candidate is based on the v0.1.0-30 implementation validated with Threads 448.0.0, primarily under LiveContainer, with direct sideload testing also performed.
+Matter 0.1.0 is the first stable release of Matter for Threads. It is based on the v0.1.0-30 implementation validated against Threads 448.0.0 on arm64, primarily with LiveContainer; direct sideload testing has also been performed. Compatibility with other Threads versions is not guaranteed.
 
 ## Included
 
-- Sponsored-post blocking, enabled by default.
-- Separate ad-telemetry and analytics controls for confirmed Threads 448.0.0 entry points; both are off by default.
-- Cache size display, confirmed manual cache clearing, and optional once-per-process-start cache clearing; automatic clearing is off by default.
-- A Matter-owned entry in Threads Settings and a Matter-owned settings screen.
-- Debug logging, off by default.
+- Block Sponsored Posts, enabled by default.
+- Block Ad Telemetry and Block Analytics for the confirmed Threads 448.0.0 entry points currently covered by Matter; both are off by default.
+- Cache Size, Clear Cache, and optional Clear Cache on Startup; startup clearing is off by default.
+- Matter settings integration in Threads.
+- Debug Logging, off by default.
 - LiveContainer-aware temporary-cache validation that proves the temporary directory matches the validated container alias before operating on it.
 
-## Scope
+## Compatibility and scope
 
-The privacy controls cover specific confirmed callbacks, not all Meta telemetry or analytics. Compatibility with other Threads versions is not guaranteed. This is a release candidate, not a claim of final or universal compatibility.
+Privacy controls cover only the confirmed entry points currently implemented by Matter; they do not block all Meta telemetry or analytics. Cache management is limited to validated cache locations and shared `NSURLCache` responses. Matter does not clear account or session data. Compatibility with Threads versions other than 448.0.0 is not guaranteed.

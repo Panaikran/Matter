@@ -3,7 +3,7 @@ name: Build Matter for Threads
 on:
   push:
     branches: [main]
-    tags: [v0.1.0-rc1]
+    tags: [v0.1.0]
   pull_request:
   workflow_dispatch:
 
@@ -38,24 +38,24 @@ jobs:
           echo "THEOS=${THEOS}" >> "${GITHUB_ENV}"
           echo "THEOS_STAGING_DIR=${RUNNER_TEMP}/matter-staging" >> "${GITHUB_ENV}"
 
-      - name: Build RC1 package
+      - name: Build Matter 0.1.0 package
         run: |
           make clean package \
             MATTER_EXPERIMENTAL_FILTERING=1 \
             MATTER_SETTINGS_INJECTION=1 \
             MATTER_UI_DISCOVERY=0 \
             MATTER_TELEMETRY_DISCOVERY=0 \
-            PACKAGE_VERSION='0.1.0~rc1'
+            PACKAGE_VERSION='0.1.0'
 
       - name: Verify Matter package
         shell: bash
         run: |
           set -euo pipefail
-          deb='packages/com.panaikran.matter_0.1.0~rc1_iphoneos-arm.deb'
+          deb='packages/com.panaikran.matter_0.1.0_iphoneos-arm.deb'
           test -f "${deb}"
           metadata="$(dpkg-deb -f "${deb}")"
           grep -Fxq 'Package: com.panaikran.matter' <<< "${metadata}"
-          grep -Fxq 'Version: 0.1.0~rc1' <<< "${metadata}"
+          grep -Fxq 'Version: 0.1.0' <<< "${metadata}"
           grep -Fxq 'Architecture: iphoneos-arm' <<< "${metadata}"
           if grep -q '^Depends:' <<< "${metadata}"; then
             echo 'Unexpected package dependency field.' >&2
@@ -70,7 +70,7 @@ jobs:
       - name: Upload Matter Debian package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: Matter-0.1.0-RC1-iphoneos-arm
-          path: packages/com.panaikran.matter_0.1.0~rc1_iphoneos-arm.deb
+          name: Matter-0.1.0-iphoneos-arm
+          path: packages/com.panaikran.matter_0.1.0_iphoneos-arm.deb
           if-no-files-found: error
           retention-days: 30

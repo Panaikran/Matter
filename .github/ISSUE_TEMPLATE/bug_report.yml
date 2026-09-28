@@ -6,7 +6,7 @@ body:
     id: matter-version
     attributes:
       label: Matter version
-      placeholder: 0.1.0 RC1
+      placeholder: 0.1.0
     validations:
       required: true
   - type: input

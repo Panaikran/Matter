@@ -28,8 +28,8 @@ permissions:
   contents: write
 
 env:
-  MATTER_PACKAGE_VERSION: "0.1.0~rc1"
-  MATTER_DISPLAY_VERSION: "0.1.0 RC1"
+  MATTER_PACKAGE_VERSION: "0.1.0"
+  MATTER_DISPLAY_VERSION: "0.1.0"
 
 jobs:
   build-matter:
@@ -111,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: matter-deb
-          path: packages/com.panaikran.matter_0.1.0~rc1_iphoneos-arm.deb
+          path: packages/com.panaikran.matter_0.1.0_iphoneos-arm.deb
           retention-days: 1
           if-no-files-found: error
 
@@ -229,7 +229,7 @@ jobs:
           echo "::notice::Detected Threads version: ${version}"
 
           if [[ "${version}" != "448.0.0" ]]; then
-            echo "::warning::Matter 0.1.0 RC1 is validated against Threads 448.0.0. This IPA reports ${version}."
+            echo "::warning::Matter 0.1.0 is validated against Threads 448.0.0. This IPA reports ${version}."
           fi
 
           cryptid="$(

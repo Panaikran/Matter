@@ -54,7 +54,7 @@ Build Matter from this repository and install or inject the resulting Matter pac
 
 ## Building
 
-Build on a supported Theos environment with the iOS SDK and arm64 toolchain installed. The release-candidate build is:
+Build on a supported Theos environment with the iOS SDK and arm64 toolchain installed. Build Matter 0.1.0 with:
 
 ```sh
 export THEOS="$HOME/theos"
@@ -65,12 +65,12 @@ make clean package \
   MATTER_SETTINGS_INJECTION=1 \
   MATTER_UI_DISCOVERY=0 \
   MATTER_TELEMETRY_DISCOVERY=0 \
-  PACKAGE_VERSION='0.1.0~rc1'
+  PACKAGE_VERSION='0.1.0'
 ```
 
-The package is arm64 (`iphoneos-arm`) and is named `com.panaikran.matter_0.1.0~rc1_iphoneos-arm.deb`.
+The package is arm64 (`iphoneos-arm`) and is named `com.panaikran.matter_0.1.0_iphoneos-arm.deb`.
 
-The planned Git tag is `v0.1.0-rc1`; the planned GitHub Release title is **Matter for Threads 0.1.0 RC1**. The About screen displays `0.1.0 RC1`; Debian uses `0.1.0~rc1`, which sorts before the eventual final `0.1.0` package. See [release notes](RELEASE_NOTES.md).
+The Git tag is `v0.1.0`, and the GitHub Release title is **Matter for Threads 0.1.0**. The About screen displays `0.1.0`. See [release notes](RELEASE_NOTES.md).
 
 ## Privacy scope
 

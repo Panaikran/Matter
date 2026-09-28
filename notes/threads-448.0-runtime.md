@@ -1,6 +1,6 @@
-# Matter for Threads 0.1.0 RC1 runtime notes
+# Matter for Threads 0.1.0 runtime notes
 
-Matter 0.1.0 RC1 is based on the v0.1.0-30 implementation validated on arm64 Threads 448.0.0, primarily under LiveContainer; direct sideload testing has also been performed. Other app versions are not guaranteed.
+Matter 0.1.0 is based on the v0.1.0-30 implementation validated on arm64 Threads 448.0.0, primarily under LiveContainer; direct sideload testing has also been performed. Other app versions are not guaranteed.
 
 ## First-install defaults
 
@@ -30,14 +30,14 @@ Cache roots, startup behavior, and privacy boundaries are summarized in [cache m
 
 ## Build switches
 
-The public RC1 build uses:
+The public 0.1.0 build uses:
 
 ```sh
 MATTER_EXPERIMENTAL_FILTERING=1
 MATTER_SETTINGS_INJECTION=1
 MATTER_UI_DISCOVERY=0
 MATTER_TELEMETRY_DISCOVERY=0
-PACKAGE_VERSION='0.1.0~rc1'
+PACKAGE_VERSION='0.1.0'
 ```
 
 `TweakUI.xm` is excluded when `MATTER_UI_DISCOVERY=0`. The normal production privacy hooks are independent of telemetry discovery mode.
