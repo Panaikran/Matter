@@ -2,7 +2,7 @@ name: Build Matter for Threads
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: [v0.1.0-rc1]
   pull_request:
   workflow_dispatch:
