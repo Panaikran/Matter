@@ -1,0 +1,50 @@
+name: Matter for Threads bug report
+description: Report a reproducible issue with Matter for Threads
+title: "[Bug]: "
+body:
+  - type: input
+    id: matter-version
+    attributes:
+      label: Matter version
+      placeholder: 0.1.0 RC1
+    validations:
+      required: true
+  - type: input
+    id: threads-version
+    attributes:
+      label: Threads version
+      placeholder: 448.0.0
+    validations:
+      required: true
+  - type: input
+    id: ios-version
+    attributes:
+      label: iOS version
+      placeholder: iOS version and build, if known
+    validations:
+      required: true
+  - type: dropdown
+    id: install-environment
+    attributes:
+      label: Install environment
+      options:
+        - LiveContainer
+        - Direct sideload
+        - Jailbreak (if applicable)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: List the steps and the result you expected and observed.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Matter logs
+      description: Remove usernames, IDs, tokens, private content, filesystem paths, and signing credentials before posting.
+    validations:
+      required: false

@@ -1,0 +1,47 @@
+name: Matter for Threads compatibility report
+description: Report Matter for Threads behavior on a Threads or iOS version
+title: "[Compatibility]: "
+body:
+  - type: input
+    id: matter-version
+    attributes:
+      label: Matter version
+    validations:
+      required: true
+  - type: input
+    id: threads-version
+    attributes:
+      label: Threads version
+    validations:
+      required: true
+  - type: input
+    id: ios-version
+    attributes:
+      label: iOS version
+    validations:
+      required: true
+  - type: dropdown
+    id: install-environment
+    attributes:
+      label: Install environment
+      options:
+        - LiveContainer
+        - Direct sideload
+        - Jailbreak (if applicable)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Feature results
+      description: Note which Matter features you tested and what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Matter logs
+      description: Remove usernames, IDs, tokens, private content, filesystem paths, and signing credentials before posting.
+    validations:
+      required: false

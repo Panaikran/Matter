@@ -1,0 +1,10 @@
+Package: com.panaikran.matter
+Name: Matter for Threads
+Version: 0.1.0~rc1
+Architecture: iphoneos-arm
+Conflicts: com.example.matter
+Replaces: com.example.matter
+Description: Matter for Threads: content, privacy, and cache controls for Threads.
+Maintainer: Matter Research
+Author: Matter Research
+Section: Tweaks

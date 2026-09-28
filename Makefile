@@ -1,0 +1,21 @@
+TARGET := iphone:clang:latest:16.3
+ARCHS = arm64
+
+include $(THEOS)/makefiles/common.mk
+
+TWEAK_NAME = Matter
+Matter_FILES = Tweak.xm MatterPreferences.m MatterSettingsViewController.m MatterCacheManager.m TweakPrivacy.m
+MATTER_EXPERIMENTAL_FILTERING ?= 0
+MATTER_UI_DISCOVERY ?= 0
+MATTER_SETTINGS_INJECTION ?= 0
+MATTER_TELEMETRY_DISCOVERY ?= 0
+MATTER_VERSION ?= $(firstword $(subst +, ,$(if $(PACKAGE_VERSION),$(PACKAGE_VERSION),$(shell sed -n 's/^Version: //p' control))))
+ifeq ($(MATTER_UI_DISCOVERY),1)
+Matter_FILES += TweakUI.xm
+endif
+ifeq ($(MATTER_SETTINGS_INJECTION),1)
+Matter_FILES += TweakSettingsInjection.m
+endif
+Matter_CFLAGS = -fobjc-arc -DMATTER_EXPERIMENTAL_FILTERING=$(MATTER_EXPERIMENTAL_FILTERING) -DMATTER_UI_DISCOVERY=$(MATTER_UI_DISCOVERY) -DMATTER_SETTINGS_INJECTION=$(MATTER_SETTINGS_INJECTION) -DMATTER_TELEMETRY_DISCOVERY=$(MATTER_TELEMETRY_DISCOVERY) -DMATTER_VERSION='@"$(MATTER_VERSION)"'
+
+include $(THEOS_MAKE_PATH)/tweak.mk

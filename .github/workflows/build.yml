@@ -1,0 +1,76 @@
+name: Build Matter for Threads
+
+on:
+  push:
+    branches: [master]
+    tags: [v0.1.0-rc1]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out Matter source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl fakeroot git libtinfo6 libxml2 perl rsync unzip
+
+      - name: Install pinned Theos revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          theos_commit=dd5c14bb9d91311e221d51b5bfb8c9e5948156db
+          export THEOS="${RUNNER_TEMP}/theos"
+          export CI=1
+          installer="https://raw.githubusercontent.com/theos/theos/${theos_commit}/bin/install-theos"
+          curl -fsSL "${installer}" -o "${RUNNER_TEMP}/install-theos"
+          bash "${RUNNER_TEMP}/install-theos"
+          git -C "${THEOS}" fetch --depth=1 origin "${theos_commit}"
+          git -C "${THEOS}" checkout --detach "${theos_commit}"
+          git -C "${THEOS}" submodule update --init --recursive
+          echo "THEOS=${THEOS}" >> "${GITHUB_ENV}"
+          echo "THEOS_STAGING_DIR=${RUNNER_TEMP}/matter-staging" >> "${GITHUB_ENV}"
+
+      - name: Build RC1 package
+        run: |
+          make clean package \
+            MATTER_EXPERIMENTAL_FILTERING=1 \
+            MATTER_SETTINGS_INJECTION=1 \
+            MATTER_UI_DISCOVERY=0 \
+            MATTER_TELEMETRY_DISCOVERY=0 \
+            PACKAGE_VERSION='0.1.0~rc1'
+
+      - name: Verify Matter package
+        shell: bash
+        run: |
+          set -euo pipefail
+          deb='packages/com.panaikran.matter_0.1.0~rc1_iphoneos-arm.deb'
+          test -f "${deb}"
+          metadata="$(dpkg-deb -f "${deb}")"
+          grep -Fxq 'Package: com.panaikran.matter' <<< "${metadata}"
+          grep -Fxq 'Version: 0.1.0~rc1' <<< "${metadata}"
+          grep -Fxq 'Architecture: iphoneos-arm' <<< "${metadata}"
+          if grep -q '^Depends:' <<< "${metadata}"; then
+            echo 'Unexpected package dependency field.' >&2
+            exit 1
+          fi
+          contents="$(dpkg-deb --contents "${deb}")"
+          if grep -Eiq 'Threads|Payload|\.ipa|\.app/|\.framework/' <<< "${contents}"; then
+            echo 'Unexpected app binary or resource in Matter package.' >&2
+            exit 1
+          fi
+
+      - name: Upload Matter Debian package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Matter-0.1.0-RC1-iphoneos-arm
+          path: packages/com.panaikran.matter_0.1.0~rc1_iphoneos-arm.deb
+          if-no-files-found: error
+          retention-days: 30

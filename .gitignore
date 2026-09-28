@@ -1,0 +1,56 @@
+# App packages and extracted app bundles
+*.ipa
+Payload/
+*.app/
+*.appex/
+*.framework/
+*.xcarchive/
+decrypted/
+decrypted-binaries/
+extracted/
+dumps/
+runtime-captures/
+*.decrypted
+*.decrypted.*
+
+# Theos and generated build output
+.theos/
+obj/
+packages/
+build/
+staging/
+DerivedData/
+analysis/
+*.o
+*.a
+*.dylib
+*.deb
+*.dSYM/
+*.log
+*.ips
+
+# Signing material and local credentials
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.pfx
+*.cer
+*.crt
+*.pem
+*.key
+*.der
+*.p8
+*.p7b
+*.csr
+*.jks
+*.keystore
+signing/
+certificates/
+.env
+.env.*
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
